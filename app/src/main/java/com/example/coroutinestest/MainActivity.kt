@@ -71,23 +71,51 @@ class MainActivity : AppCompatActivity() {
     private val job0: Job = Job()
     private val scope0 = CoroutineScope(Dispatchers.Default + job0)
 
-    private fun loadData0() = scope0.launch {
+//    private fun loadData0() = scope0.launch {
+//        val asy = async {
+//            Log.d("async 异常:", "开始准备抛出异常")
+//            delay(1000)
+//            throw NullPointerException("自定义空指针异常")
+//        }
+//        try {
+//            //崩溃原因其实不是在调用await方法之后引起的崩溃，是代码执行到 throw NullPointerException("自定义空指针异常")就抛出异常了，可以IP屏蔽掉asy.await()方法看日志就知道
+//            //2022-03-22 19:55:05.460 26378-26415/com.example.coroutinestest D/async 异常:: 继续执行后续代码
+//            //2022-03-22 19:55:05.461 26378-26415/com.example.coroutinestest D/async 异常:: 开始准备抛出异常
+//
+//            asy.await()
+//        } catch (e: Exception) {
+//            Log.d("async 异常: 捕获的异常-", e.toString())
+//        }
+//        Log.d("async 异常:", "继续执行后续代码")
+//    }
+
+    //解决上诉问题的方法就是这个异常被内部coroutineexceptionhandler捕获并处理，像下面这样
+//    2022-03-22 20:02:31.121 27083-27166/com.example.coroutinestest D/async 异常:: 开始准备抛出异常
+//    2022-03-22 20:02:32.134 27083-27167/com.example.coroutinestest D/async 异常: 捕获的异常-: java.lang.NullPointerException: 自定义空指针异常
+//    2022-03-22 20:02:32.134 27083-27167/com.example.coroutinestest D/async 异常:: 继续执行后续代码
+//    2022-03-22 20:02:32.135 27083-27166/com.example.coroutinestest D/async 异常:: 异常被内部CoroutineExceptionHandler处理掉了
+
+    private val coroutineExceptionHandler = CoroutineExceptionHandler { _, _ ->
+        Log.d("async 异常:", "异常被内部CoroutineExceptionHandler处理掉了")
+    }
+
+    private fun loadData0() = scope0.launch(coroutineExceptionHandler) {
         val asy = async {
             Log.d("async 异常:", "开始准备抛出异常")
             delay(1000)
             throw NullPointerException("自定义空指针异常")
         }
         try {
-            //崩溃原因其实不是在调用await方法之后引起的崩溃，是代码执行到 throw NullPointerException("自定义空指针异常")就抛出异常了，可以IP屏蔽掉asy.await()方法看日志就知道
-            //2022-03-22 19:55:05.460 26378-26415/com.example.coroutinestest D/async 异常:: 继续执行后续代码
-            //2022-03-22 19:55:05.461 26378-26415/com.example.coroutinestest D/async 异常:: 开始准备抛出异常
-
             asy.await()
         } catch (e: Exception) {
             Log.d("async 异常: 捕获的异常-", e.toString())
         }
         Log.d("async 异常:", "继续执行后续代码")
     }
+
+
+
+
 
 
     /**
