@@ -19,6 +19,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun initView() {
 //        loadData()
+        loadData0()
 //        loadData1()
 //        loadData2()
 //        loadData3()
@@ -27,7 +28,7 @@ class MainActivity : AppCompatActivity() {
 
 
 //        coroutineBuildRunBlock7()
-        coroutineBuildRunBlock8()
+//        coroutineBuildRunBlock8()
 //        coroutineBuildRunBlock9()
 //        coroutineBuildRunBlock10()
 
@@ -50,6 +51,42 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.d("try catch捕获的异常:", e.toString())
         }
+    }
+
+    /**
+     * 会崩溃
+     *
+     *2022-03-22 19:51:02.074 25864-25903/com.example.coroutinestest D/async 异常:: 开始准备抛出异常
+    2022-03-22 19:51:03.085 25864-25905/com.example.coroutinestest D/async 异常: 捕获的异常-: java.lang.NullPointerException: 自定义空指针异常
+    2022-03-22 19:51:03.085 25864-25905/com.example.coroutinestest D/async 异常:: 继续执行后续代码
+
+    虽然捕获到了异常但是依然引起了崩溃，这里的崩溃其实不是调用await引起的而是执行到抛出异常那里就引起了，只是崩溃后这个异常被捕获到了而已
+
+     *
+    当async作为根协程时，被封装到deferred对象中的异常才会在调用await时抛出。
+    如果async作为一个子协程时，那么异常并不会等到调用await时抛出，而是立刻抛出异常。
+     *
+     */
+
+    private val job0: Job = Job()
+    private val scope0 = CoroutineScope(Dispatchers.Default + job0)
+
+    private fun loadData0() = scope0.launch {
+        val asy = async {
+            Log.d("async 异常:", "开始准备抛出异常")
+            delay(1000)
+            throw NullPointerException("自定义空指针异常")
+        }
+        try {
+            //崩溃原因其实不是在调用await方法之后引起的崩溃，是代码执行到 throw NullPointerException("自定义空指针异常")就抛出异常了，可以IP屏蔽掉asy.await()方法看日志就知道
+            //2022-03-22 19:55:05.460 26378-26415/com.example.coroutinestest D/async 异常:: 继续执行后续代码
+            //2022-03-22 19:55:05.461 26378-26415/com.example.coroutinestest D/async 异常:: 开始准备抛出异常
+
+            asy.await()
+        } catch (e: Exception) {
+            Log.d("async 异常: 捕获的异常-", e.toString())
+        }
+        Log.d("async 异常:", "继续执行后续代码")
     }
 
 
@@ -320,8 +357,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
     }
-
-
 
 
 }
