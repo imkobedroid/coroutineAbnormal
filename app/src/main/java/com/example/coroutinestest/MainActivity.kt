@@ -18,8 +18,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initView() {
+
+
 //        loadData()
-        loadData0()
+//        loadData00()
 //        loadData1()
 //        loadData2()
 //        loadData3()
@@ -29,9 +31,20 @@ class MainActivity : AppCompatActivity() {
 
 //        coroutineBuildRunBlock7()
 //        coroutineBuildRunBlock8()
-//        coroutineBuildRunBlock9()
+        coroutineBuildRunBlock9()
 //        coroutineBuildRunBlock10()
 
+    }
+
+
+    private fun loadData00() {
+        try {
+            Thread() {
+                throw NullPointerException()
+            }.start()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
 
@@ -114,10 +127,6 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-
-
-
-
     /**
      * 会崩溃，因为launch开启的协程是不会向外线程牌抛出异常的，所以try catch是不会捕获到当前线程的异常的所以会崩溃
      */
@@ -193,7 +202,7 @@ class MainActivity : AppCompatActivity() {
     //无论launch有几层都不会崩溃
     private fun doWork4() = scope4.launch { launch { throw NullPointerException("自定义空指针异常") } }
 
-    private fun loadData4() = scope4.launch() {
+    private fun loadData4() = scope4.launch {
         try {
             doWork4()
         } catch (e: Exception) {
@@ -222,7 +231,7 @@ class MainActivity : AppCompatActivity() {
     //无论launch有几层都不会崩溃
     private fun doWork5() = scope5x.launch { launch { throw NullPointerException("自定义空指针异常") } }
 
-    private fun loadData5() = scope5.launch() {
+    private fun loadData5() = scope5.launch {
         try {
             doWork5()
         } catch (e: Exception) {
@@ -306,10 +315,9 @@ class MainActivity : AppCompatActivity() {
     /**
      * 不会崩溃
      *
-    2022-03-22 15:33:35.334 21018-21073/com.example.coroutinestest D/kobe: job2 throw execption
-    2022-03-22 15:33:35.335 21018-21077/com.example.coroutinestest D/kobe: start job1 delay
-    2022-03-22 15:33:35.339 21018-21077/com.example.coroutinestest D/kobe: CoroutineExceptionHandler
-
+    2022-03-23 17:32:25.771 8593-8638/com.example.coroutinestest D/kobe: job2 throw execption
+    2022-03-23 17:32:25.772 8593-8642/com.example.coroutinestest D/kobe: start job1 delay
+    2022-03-23 17:32:25.785 8593-8642/com.example.coroutinestest D/kobe: CoroutineExceptionHandler
     SupervisorJob这个任务是阻止异常不会向外传播，因此不会影响其父亲/兄弟协程，也不会被其兄弟协程抛出的异常影响，但是他内部生成的各种协程是依然会像job一样互相影响，所以日志里面不全
      *
      */
@@ -318,20 +326,27 @@ class MainActivity : AppCompatActivity() {
     private val handler9 = CoroutineExceptionHandler { _, _ ->
         Log.d("kobe", "CoroutineExceptionHandler")
     }
+     private val handler99 = CoroutineExceptionHandler { _, _ ->
+        Log.d("kobe", "顶层异常处理")
+    }
+
 
     private fun coroutineBuildRunBlock9() = runBlocking(Dispatchers.IO) {
-        CoroutineScope(handler9 + supervisorJob9)
-            .launch {
-                launch {
-                    Log.d("kobe", "start job1 delay")
-                    delay(1000)
-                    Log.d("kobe", "end job1 delay")
+
+        CoroutineScope(handler99 ).launch {
+            CoroutineScope(  handler9+supervisorJob9)
+                .launch {
+                    launch {
+                        Log.d("kobe", "start job1 delay")
+                        delay(1000)
+                        Log.d("kobe", "end job1 delay")
+                    }
+                    launch {
+                        Log.d("kobe", "job2 throw execption")
+                        throw NullPointerException()
+                    }
                 }
-                launch {
-                    Log.d("kobe", "job2 throw execption")
-                    throw NullPointerException()
-                }
-            }
+        }
     }
 
 
